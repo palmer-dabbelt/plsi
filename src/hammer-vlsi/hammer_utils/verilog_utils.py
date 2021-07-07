@@ -8,14 +8,11 @@
 
 import re
 
-__all__ = ['VerilogUtils']
-
-
 class VerilogUtils:
     @staticmethod
     def remove_comments(v: str) -> str:
         """
-        Remove comments from the given Verilog file.
+        Remove comments from the given Verilog source.
 
         :param v: Verilog source code
         :return: Source code without comments
@@ -46,7 +43,7 @@ class VerilogUtils:
     @staticmethod
     def remove_module(v: str, module: str) -> str:
         """
-        Remove the given module from the given Verilog source file, if it exists.
+        Remove the given module from the given Verilog source, if it exists.
 
         :param v: Verilog source code
         :param module: Module to remove

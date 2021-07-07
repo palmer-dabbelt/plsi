@@ -18,6 +18,7 @@ import decimal
 from decimal import Decimal
 
 from .verilog_utils import *
+from .spice_utils import *
 from .lef_utils import *
 
 
