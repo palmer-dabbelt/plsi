@@ -298,7 +298,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             par_to_syn = ""
             if len(out_edges) > 0:
                 syn_deps = os.path.join(obj_dir, "syn-{}-input.json".format(node))
-                p_syn_in = "-p {}".format(syn_deps)
+                p_syn_in = "-p {}".format(syn_deps) + " " + p_syn_in
                 out_confs = [os.path.join(obj_dir, "par-" + x, "par-output-full.json") for x in out_edges]
                 prereqs = " ".join(out_confs)
                 pstring = " ".join(["-p " + x for x in out_confs])
