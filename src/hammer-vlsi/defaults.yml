@@ -353,7 +353,7 @@ vlsi.inputs:
   # Valid options:
   # cpf - Use the common power format commonly used in Cadence tools
   # upf - Use the universal power format, IEEE 1801-2015
-  power_spec_type: null
+  power_spec_type: upf
   # Optional: Contents of a power specification in the above type (str)
   power_spec_contents: null
 
