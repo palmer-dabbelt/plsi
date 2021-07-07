@@ -182,6 +182,7 @@ class HammerToolTest(HasGetTech, unittest.TestCase):
         """
         import hammer_config
 
+        1/0
         tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
         tech_json = {
