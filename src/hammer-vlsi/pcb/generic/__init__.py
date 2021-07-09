@@ -34,6 +34,7 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
             self.create_footprint_csv,
             self.create_footprint,
             self.create_bom_builder_pindata_txt,
+            self.create_mechanical_drawing,
             self.create_schematic_symbols
         ]
         return self.make_steps_from_methods(steps)
@@ -46,6 +47,11 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
     @property
     def output_footprint_csv_filename(self) -> str:
         return os.path.join(self.run_dir, "{top}-pads.csv".format(top=self.top_module))
+
+    @property
+    def output_mechanical_drawing_filename(self) -> str:
+        # change this when supporting other types
+        return os.path.join(self.run_dir, "{top}-pads.svg".format(top=self.top_module))
 
     @property
     def output_schematic_symbol_filename(self) -> str:
@@ -261,6 +267,92 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
             f.write(output)
 
         return True
+
+    def create_mechanical_drawing(self) -> bool:
+        """
+        Create an SVG-based mechanical drawing of the bump-out.
+
+        :return: True if successful
+        """
+
+        bumps, assignments = self.get_bumps_and_assignments()
+
+        # Use post-shrink pitch
+
+        # TODO fixme this is just copied/pasted from eagle
+        die_w_um = self.technology.get_post_shrink_length(Decimal(7500))
+        die_h_um = die_w_um
+
+        # Some input values and a conversion factor
+        canvas_w_px = Decimal(10000)
+        margin_px = Decimal(10)
+        die_w_px = canvas_w_px - (2*margin_px)
+        px_per_um = die_w_px / die_w_um
+
+        # Calculate the rest of the canvas size
+        die_h_px = die_h_um * px_per_um
+        canvas_h_px = die_h_px + (2*margin_px)
+
+        # Some other things we need to calculate
+        pitch_um = self.technology.get_post_shrink_length(bumps.pitch)
+        pitch_px = pitch_um * px_per_um
+        opening_um = self.bump_pad_opening_diameter
+        opening_px = opening_um * px_per_um
+
+        offset_px = margin_px + opening_px / Decimal(2)
+
+        # Header
+        output = """<?xml version="1.0"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">""".format(width=canvas_w_px,height=canvas_h_px)
+
+        # Styles
+        output += """
+<defs><style type="text/css">
+circle {
+    stroke: #000000;
+    fill: #ffffff;
+    stroke-width: 3;
+}
+rect {
+    stroke: #000000;
+    fill: #ffffff;
+    stroke-width: 3;
+}
+path {
+    stroke: none;
+    fill: #000000;
+}
+</style></defs>
+"""
+
+        # Die
+        output += "<rect x=\"{x}\" y=\"{y}\" width=\"{w}\" height=\"{h}\" />\n".format(x=margin_px, y=margin_px, w=die_w_px, h=die_h_px)
+
+        # A1 marker
+        x0 = die_w_px - pitch_px
+        x1 = die_w_px
+        y0 = 2*margin_px
+        y1 = y0 + pitch_px
+        output += "<path d=\"M{x0} {y0} L{x1} {y0} L{x1} {y1} Z\" />\n".format(x0=x0, x1=x1, y0=y0, y1=y1)
+
+        for bump in assignments:
+            x = offset_px + bump.x * pitch_px
+            y = canvas_h_px - (offset_px + bump.y * pitch_px)
+            r = opening_px * Decimal("0.5") # radius
+            l = opening_px * Decimal("0.9") # 90% of the diameter
+            name = bump.name
+            classes = "" # none for now
+            output += "<circle cx=\"{x}\" cy=\"{y}\" r=\"{r}\" class=\"{classes}\" />\n".format(x=x, y=y, r=r, classes=classes)
+            output += "<text x=\"{x}\" y=\"{y}\" textLength=\"{l}\" text-anchor=\"middle\" alignment-baseline=\"middle\" lengthAdjust=\"spacingAndGlyphs\">{name}</text>\n".format(x=x, y=y, l=l, name=name)
+
+        output += "</svg>\n"
+
+        with open(self.output_mechanical_drawing_filename, "w") as f:
+            f.write(output)
+
+        return True
+
 
     def create_schematic_symbols(self) -> bool:
         """
